@@ -3,141 +3,302 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slot Watcher | Command Center</title>
+    <title>Command Center | Professional Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Firebase SDKs -->
+    
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-        body { background-color: #050505; color: white; font-family: 'Plus Jakarta Sans', sans-serif; }
-        .card { background: #111; border: 1px solid #222; border-radius: 32px; }
-        .neon-glow { box-shadow: 0 0 20px rgba(255, 214, 0, 0.15); }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        :root { --glass: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.1); --accent: #fbbf24; }
+        
+        body { 
+            background: radial-gradient(circle at top right, #0f172a, #020617); 
+            color: white; 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            min-height: 100vh; 
+            margin: 0; 
+            overflow-x: hidden;
+        }
+
+        .glass-panel { 
+            background: var(--glass); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px); 
+            border: 1px solid var(--glass-border); 
+            border-radius: 28px; 
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+        }
+
+        /* Droplet & Liquid Background */
+        .droplet-bg { 
+            position: fixed; inset: 0; z-index: -1; opacity: 0.3; 
+            background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0); 
+            background-size: 45px 45px; 
+        }
+
+        .liquid-blob { 
+            position: fixed; width: 600px; height: 600px; 
+            background: linear-gradient(to right, #1e40af, #3b82f6); 
+            filter: blur(120px); border-radius: 50%; z-index: -2; 
+            top: -10%; right: -10%; animation: drift 25s infinite alternate ease-in-out; 
+        }
+
+        @keyframes drift { from { transform: translate(0, 0); } to { transform: translate(-15%, 15%); } }
+
+        input { 
+            background: rgba(0,0,0,0.5) !important; 
+            border: 1px solid rgba(255,255,255,0.1) !important; 
+            color: white !important; 
+            transition: 0.3s;
+        }
+        input:focus { border-color: var(--accent) !important; outline: none; box-shadow: 0 0 15px rgba(251, 191, 36, 0.1); }
+
+        .btn-primary { 
+            background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); 
+            color: #000; font-weight: 800; transition: 0.3s;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(251, 191, 36, 0.3); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .hidden { display: none !important; }
+        
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-6">
+<body class="p-4 md:p-10 flex flex-col items-center">
 
-    <!-- 1. LOGIN SCREEN -->
-    <div id="login_panel" class="card p-12 w-full max-w-md text-center neon-glow">
+    <div class="droplet-bg"></div>
+    <div class="liquid-blob"></div>
+
+    <div id="login_panel" class="glass-panel p-10 w-full max-w-md my-auto text-center">
         <div class="mb-8">
-            <h1 class="text-4xl font-extrabold text-yellow-400 tracking-tighter">ADMIN LOGIN</h1>
-            <p class="text-gray-500 mt-2">Slot Watcher Control Center</p>
+            <h1 class="text-3xl font-extrabold tracking-tighter">SECURE <span class="text-yellow-400">LOGIN</span></h1>
+            <p class="text-[9px] text-gray-500 uppercase tracking-[0.4em] mt-2">Admin Authority Required</p>
         </div>
         <div class="space-y-4">
-            <input id="adm_user" type="text" placeholder="Username" class="w-full bg-black border border-zinc-800 rounded-2xl px-6 py-4 outline-none focus:border-yellow-400">
-            <input id="adm_pass" type="password" placeholder="Password" class="w-full bg-black border border-zinc-800 rounded-2xl px-6 py-4 outline-none focus:border-yellow-400">
-            <button onclick="login()" class="w-full bg-yellow-400 text-black font-black py-5 rounded-2xl hover:scale-[0.98] transition">ACCESS SYSTEM</button>
+            <input id="adm_user" type="text" placeholder="Username" class="w-full rounded-2xl px-6 py-4 outline-none">
+            <input id="adm_pass" type="password" placeholder="Passkey" class="w-full rounded-2xl px-6 py-4 outline-none">
+            <button onclick="login()" class="btn-primary w-full py-4 rounded-2xl">OPEN COMMAND CENTER</button>
         </div>
     </div>
 
-    <!-- 2. CONTROL DASHBOARD (HIDDEN INITIALLY) -->
-    <div id="dashboard_panel" class="hidden w-full max-w-5xl">
+    <div id="pin_modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
+        <div class="glass-panel p-8 w-full max-w-xs text-center border-yellow-400/30">
+            <h2 class="text-xl font-bold mb-1">Database Access</h2>
+            <p class="text-[10px] text-gray-400 mb-6 uppercase tracking-widest">Enter Verification PIN (257116)</p>
+            <input id="data_pin" type="password" maxlength="6" placeholder="******" class="w-full text-center text-3xl tracking-[0.4em] rounded-xl py-4 mb-4 outline-none">
+            <div class="flex gap-2">
+                <button onclick="closePinModal()" class="flex-1 bg-white/10 py-3 rounded-xl text-xs font-bold">CLOSE</button>
+                <button onclick="verifyPin()" class="flex-1 btn-primary py-3 rounded-xl text-xs">VERIFY</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard_panel" class="hidden w-full max-w-7xl animate-in fade-in duration-700">
         <div class="flex justify-between items-center mb-10">
             <div>
-                <h1 class="text-5xl font-black italic">COMMAND CENTER</h1>
-                <p class="text-yellow-400 font-bold tracking-widest uppercase text-xs mt-2">Connected to Global App Instances</p>
+                <h1 class="text-4xl font-black italic tracking-tighter">COMMAND <span class="text-yellow-400">CENTER</span></h1>
+                <p id="system_status" class="text-[10px] text-green-400 font-bold uppercase tracking-widest mt-1">● System Encrypted & Live</p>
             </div>
-            <button onclick="location.reload()" class="bg-red-500/10 text-red-500 font-bold px-6 py-2 rounded-full border border-red-500/20">SHUTDOWN</button>
+            <div class="flex items-center gap-6">
+                <div id="digital_clock" class="text-2xl font-black">00:00:00</div>
+                <button onclick="location.reload()" class="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white px-6 py-3 rounded-xl font-bold border border-red-500/20 transition-all">LOGOUT</button>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- PUSH UPDATE MODULE -->
-            <div class="lg:col-span-2 card p-10 neon-glow">
-                <h2 class="text-2xl font-bold mb-8 flex items-center">
-                    <span class="bg-yellow-400 text-black w-8 h-8 flex items-center justify-center rounded-lg mr-4 text-sm font-black">UP</span>
-                    Global Update Dispatcher
-                </h2>
-                <div class="space-y-8">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div>
-                            <label class="text-xs font-black text-gray-500 mb-3 block">NEW VERSION (Current: <span id="cur_v">1.0</span>)</label>
-                            <input id="new_version" type="text" value="1.1" class="w-full bg-black border border-zinc-800 rounded-2xl px-6 py-4 text-2xl font-bold">
-                        </div>
-                        <div>
-                            <label class="text-xs font-black text-gray-500 mb-3 block">APK HOSTING URL</label>
-                            <input id="new_url" type="text" placeholder="https://..." class="w-full bg-black border border-zinc-800 rounded-2xl px-6 py-4 text-gray-500 text-sm">
-                        </div>
+            
+            <div class="lg:col-span-2 glass-panel p-8">
+                <h2 class="text-xl font-bold uppercase tracking-tighter mb-8">Global App Dispatcher</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="text-[10px] text-gray-500 font-bold mb-2 block uppercase">Target Version</label>
+                        <input id="new_version" type="text" placeholder="e.g. 2.1" class="w-full rounded-2xl p-4 outline-none font-bold">
                     </div>
-                    <button onclick="pushUpdate()" id="push_btn" class="w-full bg-yellow-400 text-black font-black py-6 rounded-3xl text-xl hover:shadow-[0_0_40px_rgba(255,214,0,0.3)] transition">DISPATCH TO EVERY PHONE</button>
+                    <div>
+                        <label class="text-[10px] text-gray-500 font-bold mb-2 block uppercase">Direct APK Upload</label>
+                        <input id="apk_file" type="file" accept=".apk" class="w-full rounded-2xl p-3.5 text-xs bg-white/5 cursor-pointer">
+                    </div>
+                </div>
+                <div id="upload_progress_container" class="hidden mb-6">
+                    <div class="flex justify-between text-[10px] font-bold mb-2 uppercase">
+                        <span id="upload_status_text">Transmitting Binary...</span>
+                        <span id="upload_percent">0%</span>
+                    </div>
+                    <div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
+                        <div id="upload_bar" class="bg-yellow-400 h-full w-0 transition-all duration-300"></div>
+                    </div>
+                </div>
+                <button onclick="handleFullUpdate()" id="push_btn" class="btn-primary w-full py-6 rounded-3xl text-lg tracking-tighter">UPLOAD & PUSH UPDATE</button>
+            </div>
+
+            <div class="glass-panel p-8">
+                <h2 class="text-xl font-bold mb-6">AUTH KEYS</h2>
+                <div class="flex gap-2 mb-4">
+                    <input id="token_input" type="text" placeholder="NEW KEY" class="flex-1 rounded-xl p-4 text-xs outline-none">
+                    <button onclick="addToken()" class="bg-white text-black px-6 rounded-xl font-black hover:bg-yellow-400 transition-all">+</button>
+                </div>
+                <div id="token_list" class="space-y-3 max-h-[180px] overflow-y-auto custom-scroll pr-2"></div>
+            </div>
+
+            <div class="lg:col-span-2 glass-panel p-8">
+                <div class="flex items-center gap-3 mb-8">
+                    <span class="h-2 w-2 bg-green-500 rounded-full animate-ping"></span>
+                    <h2 class="text-xl font-bold">LIVE USER MONITOR</h2>
+                </div>
+                <table class="w-full text-left">
+                    <thead class="text-[10px] text-gray-500 uppercase tracking-widest border-b border-white/5">
+                        <tr><th class="pb-4">Mobile</th><th class="pb-4">Token Used</th><th class="pb-4 text-right">Action</th></tr>
+                    </thead>
+                    <tbody id="session_list" class="text-sm"></tbody>
+                </table>
+            </div>
+
+            <div class="glass-panel p-8 flex flex-col items-center justify-center text-center">
+                <h2 class="text-lg font-bold mb-2">User Database</h2>
+                <p class="text-[10px] text-gray-500 mb-6 uppercase tracking-widest">Permanent Storage Records</p>
+                <button onclick="openPinModal()" class="w-full py-4 bg-white/5 border border-white/10 rounded-2xl font-bold hover:bg-white/10 transition-all uppercase text-[10px] tracking-widest">Unlock Data</button>
+            </div>
+
+            <div id="secure_database" class="lg:col-span-3 glass-panel p-8 hidden bg-blue-900/5 animate-in slide-in-from-bottom duration-500">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-xl font-black text-blue-400 uppercase">Registered User Database</h2>
+                    <button onclick="document.getElementById('secure_database').classList.add('hidden')" class="text-[10px] text-gray-500 uppercase font-bold">Close Panel</button>
+                </div>
+                <div class="max-h-[500px] overflow-y-auto custom-scroll pr-4">
+                    <table class="w-full text-left">
+                        <thead class="text-[10px] text-gray-500 uppercase">
+                            <tr><th class="pb-4">Mobile</th><th class="pb-4 text-center">Assigned Token</th><th class="pb-4 text-right">ID</th></tr>
+                        </thead>
+                        <tbody id="user_db_list" class="text-xs"></tbody>
+                    </table>
                 </div>
             </div>
 
-            <!-- SECURITY MODULE -->
-            <div class="card p-10">
-                <h2 class="text-2xl font-bold mb-8">🔐 Security</h2>
-                <div class="space-y-6">
-                    <p class="text-xs text-gray-500 font-medium leading-relaxed">Generated tokens will allow lifetime access. Removing a token will instantly log out the user.</p>
-                    <div class="flex gap-2">
-                        <input id="token_input" type="text" placeholder="CODE" class="flex-1 bg-black border border-zinc-800 rounded-2xl px-4 py-3 font-mono">
-                        <button onclick="addToken()" class="bg-white text-black px-6 rounded-2xl font-bold">+</button>
-                    </div>
-                    <div id="token_list" class="space-y-3 max-h-64 overflow-y-auto">
-                        <!-- Tokens will appear here -->
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
     <script>
-        // REPLACE WITH YOUR FIREBASE CONFIG
-       const firebaseConfig = {
-    apiKey: "AIzaSyABgjALC0nc-nrnLtdD9ObLxZ2yZBkPSqc",
-    authDomain: "slot-watcher-44f23.firebaseapp.com",
-    databaseURL: "https://slot-watcher-44f23-default-rtdb.firebaseio.com",
-    projectId: "slot-watcher-44f23",
-    storageBucket: "slot-watcher-44f23.firebasestorage.app",
-    messagingSenderId: "613275783196",
-    appId: "1:613275783196:web:65492d2427a1c0d328fd9" 
-   };
-      firebase.initializeApp(firebaseConfig);
+        const firebaseConfig = {
+            apiKey: "AIzaSyABgjALC0nc-nrnLtdD9ObLxZ2yZBkPSqc",
+            authDomain: "slot-watcher-44f23.firebaseapp.com",
+            databaseURL: "https://slot-watcher-44f23-default-rtdb.firebaseio.com",
+            projectId: "slot-watcher-44f23",
+            storageBucket: "slot-watcher-44f23.firebasestorage.app",
+            messagingSenderId: "613275783196",
+            appId: "1:613275783196:web:65492d2427a1c0d328fd9" 
+        };
+        
+        firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
+        const storage = firebase.storage();
 
         function login() {
             const u = document.getElementById('adm_user').value;
             const p = document.getElementById('adm_pass').value;
             if(u === "nawaz" && p === "ADMIN786") {
-                document.getElementById('login_panel').style.display = 'none';
+                document.getElementById('login_panel').classList.add('hidden');
                 document.getElementById('dashboard_panel').classList.remove('hidden');
-                syncDashboard();
-            } else { alert("INVALID CREDENTIALS"); }
+                startSync();
+            } else { alert("ACCESS DENIED"); }
         }
 
-        function syncDashboard() {
+        function openPinModal() { document.getElementById('pin_modal').classList.remove('hidden'); }
+        function closePinModal() { document.getElementById('pin_modal').classList.add('hidden'); }
+        
+        function verifyPin() {
+            if(document.getElementById('data_pin').value === "257116") {
+                closePinModal();
+                document.getElementById('secure_database').classList.remove('hidden');
+                document.getElementById('secure_database').scrollIntoView({ behavior: 'smooth' });
+                document.getElementById('data_pin').value = "";
+            } else { alert("INVALID PIN"); }
+        }
+
+        function startSync() {
+            setInterval(() => { document.getElementById('digital_clock').innerText = new Date().toLocaleTimeString('en-GB'); }, 1000);
+            
             db.ref('config').on('value', snap => {
-                const data = snap.val();
-                if(data) {
-                    document.getElementById('cur_v').innerText = data.latest_version;
-                    document.getElementById('new_url').value = data.download_url;
-                }
+                const d = snap.val();
+                if(d) { document.getElementById('new_version').value = d.latest_version; }
             });
+
+            db.ref('sessions').on('value', snap => {
+                const list = document.getElementById('session_list');
+                list.innerHTML = "";
+                snap.forEach(child => {
+                    const u = child.val();
+                    list.innerHTML += `<tr class="border-b border-white/5"><td class="py-5 font-bold">${u.mobile}</td><td class="py-5 text-yellow-400 font-mono">${u.token}</td><td class="text-right"><button onclick="killUser('${u.token}', '${child.key}')" class="text-red-500 border border-red-500/20 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase">Block</button></td></tr>`;
+                });
+            });
+
+            db.ref('users').on('value', snap => {
+                const list = document.getElementById('user_db_list');
+                list.innerHTML = "";
+                snap.forEach(child => {
+                    const u = child.val();
+                    list.innerHTML += `<tr class="border-b border-white/5"><td class="py-4 text-white font-bold">${u.mobile}</td><td class="py-4 text-center">${u.token}</td><td class="py-4 text-right text-gray-600 font-mono">${child.key}</td></tr>`;
+                });
+            });
+
             db.ref('tokens').on('value', snap => {
                 const list = document.getElementById('token_list');
                 list.innerHTML = "";
                 snap.forEach(child => {
-                    list.innerHTML += `<div class="bg-white/5 p-4 rounded-2xl flex justify-between border border-white/5">
-                        <span class="font-mono text-yellow-400">${child.key}</span>
-                        <button onclick="db.ref('tokens/${child.key}').remove()" class="text-red-500 text-[10px] font-bold">REVOKE</button>
-                    </div>`;
+                    list.innerHTML += `<div class="bg-white/5 p-4 rounded-2xl flex justify-between border border-white/5"><span>${child.key}</span><button onclick="db.ref('tokens/${child.key}').remove()" class="text-red-500">×</button></div>`;
                 });
             });
         }
 
-        function pushUpdate() {
-            const v = document.getElementById('new_version').value;
-            const u = document.getElementById('new_url').value;
-            document.getElementById('push_btn').innerText = "DISPATCHING...";
-            db.ref('config').set({ latest_version: v, download_url: u })
-            .then(() => {
-                alert("BROADCAST SUCCESSFUL\nEvery installed app is now locked until they update to v" + v);
-                document.getElementById('push_btn').innerText = "DISPATCH TO EVERY PHONE";
-            });
+        async function handleFullUpdate() {
+            const file = document.getElementById('apk_file').files[0];
+            const version = document.getElementById('new_version').value;
+            const btn = document.getElementById('push_btn');
+            const progressContainer = document.getElementById('upload_progress_container');
+            const bar = document.getElementById('upload_bar');
+            const percentText = document.getElementById('upload_percent');
+
+            if (!file || !version) { alert("Please select APK and enter Version"); return; }
+
+            btn.disabled = true;
+            btn.innerText = "UPLOADING...";
+            progressContainer.classList.remove('hidden');
+
+            const storageRef = storage.ref('updates/' + Date.now() + "_" + file.name);
+            const uploadTask = storageRef.put(file);
+
+            uploadTask.on('state_changed', 
+                (snap) => {
+                    const progress = (snap.bytesTransferred / snap.totalBytes) * 100;
+                    bar.style.width = progress + "%";
+                    percentText.innerText = Math.round(progress) + "%";
+                }, 
+                (err) => { alert("Error: " + err.message); btn.disabled = false; }, 
+                async () => {
+                    const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                    await db.ref('config').set({ latest_version: version, download_url: downloadURL });
+                    btn.innerText = "PUSH SUCCESSFUL";
+                    alert("Update broadcasted to all users!");
+                    setTimeout(() => { btn.disabled = false; btn.innerText = "UPLOAD & PUSH UPDATE"; progressContainer.classList.add('hidden'); }, 3000);
+                }
+            );
         }
 
         function addToken() {
             const t = document.getElementById('token_input').value;
             if(t) db.ref('tokens/' + t).set(true);
             document.getElementById('token_input').value = "";
+        }
+
+        function killUser(token, sid) {
+            if(confirm("Confirm Revoke?")) {
+                db.ref('tokens/' + token).remove();
+                db.ref('sessions/' + sid).remove();
+            }
         }
     </script>
 </body>
