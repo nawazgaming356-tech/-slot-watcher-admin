@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slot Watcher | Elite Command Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+        :root { --glass: rgba(255, 255, 255, 0.03); --glass-border: rgba(255, 255, 255, 0.1); --accent: #fbbf24; }
+        
+        body { 
+            background: radial-gradient(circle at top right, #0f172a, #020617); 
+            color: white; font-family: 'Plus Jakarta Sans', sans-serif; 
+            min-height: 100vh; margin: 0; overflow-x: hidden;
+        }
+
+        .glass-panel { 
+            background: var(--glass); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border); border-radius: 32px; 
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+        }
+
+        /* Animated Background Droplets */
+        .droplet-bg { 
+            position: fixed; inset: 0; z-index: -1; opacity: 0.2; 
+            background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); 
+            background-size: 50px 50px; 
+        }
+
+        input { 
+            background: rgba(0,0,0,0.6) !important; border: 1px solid rgba(255,255,255,0.1) !important; 
+            color: white !important; transition: 0.3s;
+        }
+        input:focus { border-color: var(--accent) !important; box-shadow: 0 0 15px rgba(251, 191, 36, 0.2); outline: none; }
+
+        .btn-primary { 
+            background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); 
+            color: #000; font-weight: 800; transition: 0.3s;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(251, 191, 36, 0.4); }
+        
+        .hidden { display: none !important; }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+    </style>
+</head>
+<body class="p-4 md:p-10 flex flex-col items-center">
+
+    <div class="droplet-bg"></div>
+
+    <div id="login_panel" class="glass-panel p-12 w-full max-w-md my-auto text-center border-white/5">
+        <h1 class="text-4xl font-black italic tracking-tighter mb-2 text-yellow-400 uppercase">System Login</h1>
+        <p class="text-[9px] text-gray-500 uppercase tracking-[0.4em] mb-10">Administrative Level Only</p>
+        <div class="space-y-5">
+            <input id="adm_user" type="text" placeholder="Admin Username" class="w-full rounded-2xl px-6 py-4 outline-none">
+            <input id="adm_pass" type="password" placeholder="Passkey" class="w-full rounded-2xl px-6 py-4 outline-none">
+            <button onclick="login()" class="btn-primary w-full py-5 rounded-2xl text-sm tracking-widest uppercase">Initiate Protocol</button>
+        </div>
+    </div>
+
+    <div id="pin_modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl">
+        <div class="glass-panel p-10 w-full max-w-xs text-center border-yellow-400/20">
+            <h2 class="text-2xl font-black mb-1 italic">ACCESS KEY</h2>
+            <p class="text-[10px] text-gray-400 mb-8 uppercase tracking-widest">Verify Admin Identity</p>
+            <input id="data_pin" type="password" maxlength="6" placeholder="••••••" class="w-full text-center text-4xl tracking-[0.3em] rounded-2xl py-5 mb-6">
+            <div class="flex gap-3">
+                <button onclick="closePinModal()" class="flex-1 bg-white/5 py-4 rounded-2xl text-[10px] font-bold uppercase border border-white/5">Abort</button>
+                <button onclick="verifyPin()" class="flex-1 btn-primary py-4 rounded-2xl text-[10px] font-bold uppercase">Unlock</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboard_panel" class="hidden w-full max-w-7xl animate-in fade-in duration-1000">
+        
+        <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
+            <div class="text-center md:text-left">
+                <h1 class="text-5xl font-black italic tracking-tighter uppercase">Slot <span class="text-yellow-400">Watcher</span></h1>
+                <div class="flex items-center gap-2 mt-2 justify-center md:justify-start">
+                    <span class="h-2 w-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <p id="system_status" class="text-[10px] text-green-400 font-bold uppercase tracking-widest">Real-time Data Stream: Active</p>
+                </div>
+            </div>
+            <div class="flex gap-4">
+                <div id="clock" class="bg-white/5 px-6 py-3 rounded-2xl font-mono text-xl border border-white/5">00:00:00</div>
+                <button onclick="location.reload()" class="bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white px-8 py-3 rounded-2xl font-bold border border-red-500/20 transition-all">TERMINATE</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-2 glass-panel p-8 border-white/5">
+                <h2 class="text-xl font-bold uppercase mb-8 italic tracking-tighter">Global Update Dispatcher</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div>
+                        <label class="text-[10px] text-gray-500 font-bold mb-3 block uppercase tracking-widest">Target Version</label>
+                        <input id="new_version" type="text" placeholder="e.g. 2.0" class="w-full rounded-2xl p-4 font-bold text-xl">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-500 font-bold mb-3 block uppercase tracking-widest">APK Direct Download Link</label>
+                        <input id="download_url" type="text" placeholder="Mediafire/Dropbox URL" class="w-full rounded-2xl p-4 text-xs font-mono">
+                    </div>
+                </div>
+                <button onclick="pushUpdate()" id="push_btn" class="btn-primary w-full py-6 rounded-3xl text-lg tracking-widest uppercase">Broadcast To All Devices</button>
+            </div>
+
+            <div class="glass-panel p-8 border-white/5">
+                <h2 class="text-xl font-bold mb-8 italic">AUTH MANAGEMENT</h2>
+                <div class="flex gap-3 mb-6">
+                    <input id="token_input" type="text" placeholder="GENERATE KEY" class="flex-1 rounded-2xl p-4 text-xs">
+                    <button onclick="addToken()" class="bg-white text-black px-6 rounded-2xl font-black hover:bg-yellow-400 transition-all">+</button>
+                </div>
+                <div id="token_list" class="space-y-3 max-h-[200px] overflow-y-auto custom-scroll pr-2"></div>
+            </div>
+
+            <div class="lg:col-span-2 glass-panel p-8 border-white/5">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-xl font-bold uppercase italic tracking-tighter">Live Session Stream</h2>
+                    <span class="text-[10px] bg-white/5 px-3 py-1 rounded-full text-gray-400 uppercase font-bold tracking-widest">Auto-Sync</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="text-[10px] text-gray-500 uppercase tracking-[0.2em] border-b border-white/5">
+                            <tr><th class="pb-5">Target Device</th><th class="pb-5">Active Token</th><th class="pb-5 text-right">Control</th></tr>
+                        </thead>
+                        <tbody id="session_list" class="text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="glass-panel p-8 flex flex-col items-center justify-center text-center border-white/5">
+                <div class="w-16 h-16 bg-yellow-400/10 rounded-full flex items-center justify-center mb-6 border border-yellow-400/20">
+                    <span class="text-yellow-400 text-2xl font-bold">🔒</span>
+                </div>
+                <h2 class="text-xl font-bold mb-2 italic">User Database</h2>
+                <p class="text-[10px] text-gray-500 mb-8 uppercase tracking-[0.3em]">Permanent History Records</p>
+                <button onclick="openPinModal()" class="w-full py-5 bg-white/5 border border-white/10 rounded-2xl font-bold hover:bg-white/10 text-[10px] tracking-widest uppercase transition-all">Unlock Registry</button>
+            </div>
+
+            <div id="secure_database" class="lg:col-span-3 glass-panel p-10 hidden bg-blue-600/[0.02] border-blue-500/20">
+                <div class="flex justify-between items-center mb-10">
+                    <h2 class="text-2xl font-black text-blue-400 italic uppercase tracking-tighter underline underline-offset-8">User Registry Database</h2>
+                    <button onclick="document.getElementById('secure_database').classList.add('hidden')" class="text-[10px] text-gray-500 font-bold border border-white/10 px-4 py-2 rounded-full hover:bg-white/5 transition-all">CLOSE DATABASE</button>
+                </div>
+                <div class="max-h-[600px] overflow-y-auto custom-scroll pr-4">
+                    <table class="w-full text-left">
+                        <thead class="text-[11px] text-gray-500 uppercase tracking-widest border-b border-white/10">
+                            <tr>
+                                <th class="pb-6">User Mobile</th>
+                                <th class="pb-6 text-center">Security Key Used</th>
+                                <th class="pb-6 text-right">Unique System ID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user_db_list" class="text-xs font-medium">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyABgjALC0nc-nrnLtdD9ObLxZ2yZBkPSqc",
+            authDomain: "slot-watcher-44f23.firebaseapp.com",
+            databaseURL: "https://slot-watcher-44f23-default-rtdb.firebaseio.com",
+            projectId: "slot-watcher-44f23",
+            storageBucket: "slot-watcher-44f23.firebasestorage.app",
+            messagingSenderId: "613275783196",
+            appId: "1:613275783196:web:65492d2427a1c0d328fd9" 
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function login() {
+            const u = document.getElementById('adm_user').value;
+            const p = document.getElementById('adm_pass').value;
+            if(u === "nawaz" && p === "ADMIN786") {
+                document.getElementById('login_panel').classList.add('hidden');
+                document.getElementById('dashboard_panel').classList.remove('hidden');
+                startSync();
+            } else { alert("ACCESS DENIED"); }
+        }
+
+        function openPinModal() { document.getElementById('pin_modal').classList.remove('hidden'); }
+        function closePinModal() { document.getElementById('pin_modal').classList.add('hidden'); }
+        
+        function verifyPin() {
+            if(document.getElementById('data_pin').value === "257116") {
+                closePinModal();
+                document.getElementById('secure_database').classList.remove('hidden');
+                document.getElementById('secure_database').scrollIntoView({ behavior: 'smooth' });
+                document.getElementById('data_pin').value = "";
+            } else { alert("INVALID AUTHORIZATION PIN"); }
+        }
+
+        function startSync() {
+            setInterval(() => { 
+                document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB'); 
+            }, 1000);
+
+            // 1. Get Live App Config (Version & URL)
+            db.ref('config').on('value', snap => {
+                const d = snap.val();
+                if(d) {
+                    document.getElementById('new_version').value = d.latest_version;
+                    document.getElementById('download_url').value = d.download_url;
+                }
+            });
+
+            // 2. Real-time Live Sessions
+            db.ref('sessions').on('value', snap => {
+                const list = document.getElementById('session_list');
+                list.innerHTML = "";
+                snap.forEach(child => {
+                    const u = child.val();
+                    list.innerHTML += `<tr class="border-b border-white/5 transition-all hover:bg-white/[0.02]">
+                        <td class="py-6 font-bold text-white tracking-wider">${u.mobile}</td>
+                        <td class="py-6 text-yellow-400 font-mono text-xs">${u.token}</td>
+                        <td class="text-right">
+                            <button onclick="killUser('${u.token}', '${child.key}')" class="text-red-500 border border-red-500/30 px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-red-500 hover:text-white transition-all">Revoke</button>
+                        </td>
+                    </tr>`;
+                });
+            });
+
+            // 3. User Database Registry (Mobile & Key)
+            db.ref('users').on('value', snap => {
+                const list = document.getElementById('user_db_list');
+                list.innerHTML = "";
+                snap.forEach(child => {
+                    const u = child.val();
+                    list.innerHTML += `<tr class="border-b border-white/5 hover:bg-blue-400/5 transition-all">
+                        <td class="py-6 font-black text-white text-sm tracking-tighter">${u.mobile}</td>
+                        <td class="py-6 text-center text-yellow-400 font-mono text-xs">${u.token}</td>
+                        <td class="py-6 text-right text-gray-600 font-mono text-[10px]">${child.key}</td>
+                    </tr>`;
+                });
+            });
+
+            // 4. Global Auth Keys
+            db.ref('tokens').on('value', snap => {
+                const list = document.getElementById('token_list');
+                list.innerHTML = "";
+                snap.forEach(child => {
+                    list.innerHTML += `<div class="bg-white/5 p-5 rounded-3xl flex justify-between items-center border border-white/5 hover:border-yellow-400/30 transition-all">
+                        <span class="font-mono text-sm tracking-wider">${child.key}</span>
+                        <button onclick="db.ref('tokens/${child.key}').remove()" class="text-red-500 font-black text-xl hover:scale-125 transition-all">×</button>
+                    </div>`;
+                });
+            });
+        }
+
+        function pushUpdate() {
+            const v = document.getElementById('new_version').value;
+            const u = document.getElementById('download_url').value;
+            if(!v || !u) return alert("System Error: Inputs Empty");
+            db.ref('config').set({ latest_version: v, download_url: u }).then(() => alert("BROADCAST COMPLETE"));
+        }
+
+        function addToken() {
+            const t = document.getElementById('token_input').value;
+            if(t) db.ref('tokens/' + t).set(true);
+            document.getElementById('token_input').value = "";
+        }
+
+        function killUser(token, sid) {
+            if(confirm("DANGER: This will kick the user and burn the token. Continue?")) {
+                db.ref('tokens/' + token).remove();
+                db.ref('sessions/' + sid).remove();
+            }
+        }
+    </script>
+</body>
+</html>
