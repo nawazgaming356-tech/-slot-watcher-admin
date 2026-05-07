@@ -24,7 +24,6 @@
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
         }
 
-        /* Animated Background Droplets */
         .droplet-bg { 
             position: fixed; inset: 0; z-index: -1; opacity: 0.2; 
             background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); 
@@ -75,7 +74,6 @@
     </div>
 
     <div id="dashboard_panel" class="hidden w-full max-w-7xl animate-in fade-in duration-1000">
-        
         <div class="flex flex-col md:flex-row justify-between items-center mb-12 gap-6">
             <div class="text-center md:text-left">
                 <h1 class="text-5xl font-black italic tracking-tighter uppercase">Slot <span class="text-yellow-400">Watcher</span></h1>
@@ -91,7 +89,6 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
             <div class="lg:col-span-2 glass-panel p-8 border-white/5">
                 <h2 class="text-xl font-bold uppercase mb-8 italic tracking-tighter">Global Update Dispatcher</h2>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
@@ -101,29 +98,26 @@
                     </div>
                     <div>
                         <label class="text-[10px] text-gray-500 font-bold mb-3 block uppercase tracking-widest">APK Direct Download Link</label>
-                        <input id="download_url" type="text" placeholder="Mediafire/Dropbox URL" class="w-full rounded-2xl p-4 text-xs font-mono">
+                        <input id="download_url" type="text" placeholder="Direct Link" class="w-full rounded-2xl p-4 text-xs font-mono">
                     </div>
                 </div>
-                <button onclick="pushUpdate()" id="push_btn" class="btn-primary w-full py-6 rounded-3xl text-lg tracking-widest uppercase">Broadcast To All Devices</button>
+                <button onclick="pushUpdate()" class="btn-primary w-full py-6 rounded-3xl text-lg tracking-widest uppercase">Broadcast Update</button>
             </div>
 
             <div class="glass-panel p-8 border-white/5">
                 <h2 class="text-xl font-bold mb-8 italic">AUTH MANAGEMENT</h2>
                 <div class="flex gap-3 mb-6">
-                    <input id="token_input" type="text" placeholder="GENERATE KEY" class="flex-1 rounded-2xl p-4 text-xs">
-                    <button onclick="addToken()" class="bg-white text-black px-6 rounded-2xl font-black hover:bg-yellow-400 transition-all">+</button>
+                    <input id="token_input" type="text" placeholder="NEW KEY" class="flex-1 rounded-2xl p-4 text-xs">
+                    <button onclick="addToken()" class="bg-white text-black px-6 rounded-2xl font-black hover:bg-yellow-400">+</button>
                 </div>
                 <div id="token_list" class="space-y-3 max-h-[200px] overflow-y-auto custom-scroll pr-2"></div>
             </div>
 
             <div class="lg:col-span-2 glass-panel p-8 border-white/5">
-                <div class="flex items-center justify-between mb-8">
-                    <h2 class="text-xl font-bold uppercase italic tracking-tighter">Live Session Stream</h2>
-                    <span class="text-[10px] bg-white/5 px-3 py-1 rounded-full text-gray-400 uppercase font-bold tracking-widest">Auto-Sync</span>
-                </div>
+                <h2 class="text-xl font-bold uppercase italic mb-8">Live Session Stream</h2>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left">
-                        <thead class="text-[10px] text-gray-500 uppercase tracking-[0.2em] border-b border-white/5">
+                        <thead class="text-[10px] text-gray-500 uppercase tracking-widest border-b border-white/5">
                             <tr><th class="pb-5">Target Device</th><th class="pb-5">Active Token</th><th class="pb-5 text-right">Control</th></tr>
                         </thead>
                         <tbody id="session_list" class="text-sm"></tbody>
@@ -132,34 +126,21 @@
             </div>
 
             <div class="glass-panel p-8 flex flex-col items-center justify-center text-center border-white/5">
-                <div class="w-16 h-16 bg-yellow-400/10 rounded-full flex items-center justify-center mb-6 border border-yellow-400/20">
-                    <span class="text-yellow-400 text-2xl font-bold">🔒</span>
-                </div>
                 <h2 class="text-xl font-bold mb-2 italic">User Database</h2>
-                <p class="text-[10px] text-gray-500 mb-8 uppercase tracking-[0.3em]">Permanent History Records</p>
-                <button onclick="openPinModal()" class="w-full py-5 bg-white/5 border border-white/10 rounded-2xl font-bold hover:bg-white/10 text-[10px] tracking-widest uppercase transition-all">Unlock Registry</button>
+                <button onclick="openPinModal()" class="w-full py-5 bg-white/5 border border-white/10 rounded-2xl font-bold uppercase">Unlock Registry</button>
             </div>
 
             <div id="secure_database" class="lg:col-span-3 glass-panel p-10 hidden bg-blue-600/[0.02] border-blue-500/20">
-                <div class="flex justify-between items-center mb-10">
-                    <h2 class="text-2xl font-black text-blue-400 italic uppercase tracking-tighter underline underline-offset-8">User Registry Database</h2>
-                    <button onclick="document.getElementById('secure_database').classList.add('hidden')" class="text-[10px] text-gray-500 font-bold border border-white/10 px-4 py-2 rounded-full hover:bg-white/5 transition-all">CLOSE DATABASE</button>
-                </div>
+                <h2 class="text-2xl font-black text-blue-400 mb-10 italic uppercase underline underline-offset-8">User Registry</h2>
                 <div class="max-h-[600px] overflow-y-auto custom-scroll pr-4">
                     <table class="w-full text-left">
-                        <thead class="text-[11px] text-gray-500 uppercase tracking-widest border-b border-white/10">
-                            <tr>
-                                <th class="pb-6">User Mobile</th>
-                                <th class="pb-6 text-center">Security Key Used</th>
-                                <th class="pb-6 text-right">Unique System ID</th>
-                            </tr>
+                        <thead class="text-[11px] text-gray-500 uppercase border-b border-white/10">
+                            <tr><th class="pb-6">User Mobile</th><th class="pb-6 text-center">Key Used</th><th class="pb-6 text-right">System ID</th></tr>
                         </thead>
-                        <tbody id="user_db_list" class="text-xs font-medium">
-                            </tbody>
+                        <tbody id="user_db_list" class="text-xs"></tbody>
                     </table>
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -178,9 +159,7 @@
         const db = firebase.database();
 
         function login() {
-            const u = document.getElementById('adm_user').value;
-            const p = document.getElementById('adm_pass').value;
-            if(u === "nawaz" && p === "ADMIN786") {
+            if(document.getElementById('adm_user').value === "nawaz" && document.getElementById('adm_pass').value === "ADMIN786") {
                 document.getElementById('login_panel').classList.add('hidden');
                 document.getElementById('dashboard_panel').classList.remove('hidden');
                 startSync();
@@ -196,15 +175,12 @@
                 document.getElementById('secure_database').classList.remove('hidden');
                 document.getElementById('secure_database').scrollIntoView({ behavior: 'smooth' });
                 document.getElementById('data_pin').value = "";
-            } else { alert("INVALID AUTHORIZATION PIN"); }
+            } else { alert("INVALID PIN"); }
         }
 
         function startSync() {
-            setInterval(() => { 
-                document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB'); 
-            }, 1000);
+            setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-GB'); }, 1000);
 
-            // 1. Get Live App Config (Version & URL)
             db.ref('config').on('value', snap => {
                 const d = snap.val();
                 if(d) {
@@ -213,45 +189,29 @@
                 }
             });
 
-            // 2. Real-time Live Sessions
             db.ref('sessions').on('value', snap => {
                 const list = document.getElementById('session_list');
                 list.innerHTML = "";
                 snap.forEach(child => {
                     const u = child.val();
-                    list.innerHTML += `<tr class="border-b border-white/5 transition-all hover:bg-white/[0.02]">
-                        <td class="py-6 font-bold text-white tracking-wider">${u.mobile}</td>
-                        <td class="py-6 text-yellow-400 font-mono text-xs">${u.token}</td>
-                        <td class="text-right">
-                            <button onclick="killUser('${u.token}', '${child.key}')" class="text-red-500 border border-red-500/30 px-4 py-2 rounded-xl text-[10px] font-black uppercase hover:bg-red-500 hover:text-white transition-all">Revoke</button>
-                        </td>
-                    </tr>`;
+                    list.innerHTML += `<tr class="border-b border-white/5"><td class="py-6 font-bold">${u.mobile}</td><td class="py-6 text-yellow-400 font-mono">${u.token}</td><td class="text-right"><button onclick="killUser('${u.token}', '${child.key}')" class="text-red-500 border border-red-500/30 px-4 py-2 rounded-xl text-[10px] font-black uppercase">Revoke</button></td></tr>`;
                 });
             });
 
-            // 3. User Database Registry (Mobile & Key)
             db.ref('users').on('value', snap => {
                 const list = document.getElementById('user_db_list');
                 list.innerHTML = "";
                 snap.forEach(child => {
                     const u = child.val();
-                    list.innerHTML += `<tr class="border-b border-white/5 hover:bg-blue-400/5 transition-all">
-                        <td class="py-6 font-black text-white text-sm tracking-tighter">${u.mobile}</td>
-                        <td class="py-6 text-center text-yellow-400 font-mono text-xs">${u.token}</td>
-                        <td class="py-6 text-right text-gray-600 font-mono text-[10px]">${child.key}</td>
-                    </tr>`;
+                    list.innerHTML += `<tr class="border-b border-white/5"><td class="py-6 font-black">${u.mobile}</td><td class="py-6 text-center text-yellow-400 font-mono">${u.token}</td><td class="py-6 text-right text-gray-600 font-mono">${child.key}</td></tr>`;
                 });
             });
 
-            // 4. Global Auth Keys
             db.ref('tokens').on('value', snap => {
                 const list = document.getElementById('token_list');
                 list.innerHTML = "";
                 snap.forEach(child => {
-                    list.innerHTML += `<div class="bg-white/5 p-5 rounded-3xl flex justify-between items-center border border-white/5 hover:border-yellow-400/30 transition-all">
-                        <span class="font-mono text-sm tracking-wider">${child.key}</span>
-                        <button onclick="db.ref('tokens/${child.key}').remove()" class="text-red-500 font-black text-xl hover:scale-125 transition-all">×</button>
-                    </div>`;
+                    list.innerHTML += `<div class="bg-white/5 p-5 rounded-3xl flex justify-between items-center border border-white/5"><span>${child.key}</span><button onclick="db.ref('tokens/${child.key}').remove()" class="text-red-500 font-black text-xl">×</button></div>`;
                 });
             });
         }
@@ -259,8 +219,8 @@
         function pushUpdate() {
             const v = document.getElementById('new_version').value;
             const u = document.getElementById('download_url').value;
-            if(!v || !u) return alert("System Error: Inputs Empty");
-            db.ref('config').set({ latest_version: v, download_url: u }).then(() => alert("BROADCAST COMPLETE"));
+            if(!v || !u) return alert("Empty Fields");
+            db.ref('config').set({ latest_version: v, download_url: u }).then(() => alert("PUSH SUCCESS"));
         }
 
         function addToken() {
@@ -270,7 +230,7 @@
         }
 
         function killUser(token, sid) {
-            if(confirm("DANGER: This will kick the user and burn the token. Continue?")) {
+            if(confirm("Kick user and burn token?")) {
                 db.ref('tokens/' + token).remove();
                 db.ref('sessions/' + sid).remove();
             }
