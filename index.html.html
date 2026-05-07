@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slot Watcher | Command Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { background-color: #050505; color: white; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .card { background: #111; border: 1px solid #222; border-radius: 32px; }
+        .neon-glow { box-shadow: 0 0 20px rgba(255, 214, 0, 0.15); }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+
+    <!-- 1. LOGIN SCREEN -->
+    <div id="login_panel" class="card p-12 w-full max-w-md text-center neon-glow">
+        <div class="mb-8">
+            <h1 class="text-4xl font-extrabold text-yellow-400 tracking-tighter">ADMIN LOGIN</h1>
+            <p class="text-gray-500 mt-2">Slot Watcher Control Center</p>
+        </div>
+        <div class="space-y-4">
+            <input id="adm_user" type="text" placeholder="Username" class="w-full bg-black border border-zinc-800 rounded-2xl px-6 py-4 outline-none focus:border-yellow-400">
+            <input id="adm_pass" type="password" placeholder="Password" class="w-full bg-black border border-zinc-800 rounded-2xl px-6 py-4 outline-none focus:border-yellow-400">
+            <button onclick="login()" class="w-full bg-yellow-400 text-black font-black py-5 rounded-2xl hover:scale-[0.98] transition">ACCESS SYSTEM</button>
+        </div>
+    </div>
+
+    <!-- 2. CONTROL DASHBOARD (HIDDEN INITIALLY) -->
+    <div id="dashboard_panel" class="hidden w-full max-w-5xl">
+        <div class="flex justify-between items-center mb-10">
+            <div>
+                <h1 class="text-5xl font-black italic">COMMAND CENTER</h1>
+                <p class="text-yellow-400 font-bold tracking-widest uppercase text-xs mt-2">Connected to Global App Instances</p>
+            </div>
+            <button onclick="location.reload()" class="bg-red-500/10 text-red-500 font-bold px-6 py-2 rounded-full border border-red-500/20">SHUTDOWN</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- PUSH UPDATE MODULE -->
+            <div class="lg:col-span-2 card p-10 neon-glow">
+                <h2 class="text-2xl font-bold mb-8 flex items-center">
+                    <span class="bg-yellow-400 text-black w-8 h-8 flex items-center justify-center rounded-lg mr-4 text-sm font-black">UP</span>
+                    Global Update Dispatcher
+                </h2>
+                <div class="space-y-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <label class="text-xs font-black text-gray-500 mb-3 block">NEW VERSION (Current: <span id="cur_v">1.0</span>)</label>
+                            <input id="new_version" type="text" value="1.1" class="w-full bg-black border border-zinc-800 rounded-2xl px-6 py-4 text-2xl font-bold">
+                        </div>
+                        <div>
+                            <label class="text-xs font-black text-gray-500 mb-3 block">APK HOSTING URL</label>
+                            <input id="new_url" type="text" placeholder="https://..." class="w-full bg-black border border-zinc-800 rounded-2xl px-6 py-4 text-gray-500 text-sm">
+                        </div>
+                    </div>
+                    <button onclick="pushUpdate()" id="push_btn" class="w-full bg-yellow-400 text-black font-black py-6 rounded-3xl text-xl hover:shadow-[0_0_40px_rgba(255,214,0,0.3)] transition">DISPATCH TO EVERY PHONE</button>
+                </div>
+            </div>
+
+            <!-- SECURITY MODULE -->
+            <div class="card p-10">
+                <h2 class="text-2xl font-bold mb-8">🔐 Security</h2>
+                <div class="space-y-6">
+                    <p class="text-xs text-gray-500 font-medium leading-relaxed">Generated tokens will allow lifetime access. Removing a token will instantly log out the user.</p>
+                    <div class="flex gap-2">
+                        <input id="token_input" type="text" placeholder="CODE" class="flex-1 bg-black border border-zinc-800 rounded-2xl px-4 py-3 font-mono">
+                        <button onclick="addToken()" class="bg-white text-black px-6 rounded-2xl font-bold">+</button>
+                    </div>
+                    <div id="token_list" class="space-y-3 max-h-64 overflow-y-auto">
+                        <!-- Tokens will appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // REPLACE WITH YOUR FIREBASE CONFIG
+       const firebaseConfig = {
+    apiKey: "AIzaSyABgjALC0nc-nrnLtdD9ObLxZ2yZBkPSqc",
+    authDomain: "slot-watcher-44f23.firebaseapp.com",
+    databaseURL: "https://slot-watcher-44f23-default-rtdb.firebaseio.com",
+    projectId: "slot-watcher-44f23",
+    storageBucket: "slot-watcher-44f23.firebasestorage.app",
+    messagingSenderId: "613275783196",
+    appId: "1:613275783196:web:65492d2427a1c0d328fd9" 
+   };
+      firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        function login() {
+            const u = document.getElementById('adm_user').value;
+            const p = document.getElementById('adm_pass').value;
+            if(u === "nawaz" && p === "ADMIN786") {
+                document.getElementById('login_panel').style.display = 'none';
+                document.getElementById('dashboard_panel').classList.remove('hidden');
+                syncDashboard();
+            } else { alert("INVALID CREDENTIALS"); }
+        }
+
+        function syncDashboard() {
+            db.ref('config').on('value', snap => {
+                const data = snap.val();
+                if(data) {
+                    document.getElementById('cur_v').innerText = data.latest_version;
+                    document.getElementById('new_url').value = data.download_url;
+                }
+            });
+            db.ref('tokens').on('value', snap => {
+                const list = document.getElementById('token_list');
+                list.innerHTML = "";
+                snap.forEach(child => {
+                    list.innerHTML += `<div class="bg-white/5 p-4 rounded-2xl flex justify-between border border-white/5">
+                        <span class="font-mono text-yellow-400">${child.key}</span>
+                        <button onclick="db.ref('tokens/${child.key}').remove()" class="text-red-500 text-[10px] font-bold">REVOKE</button>
+                    </div>`;
+                });
+            });
+        }
+
+        function pushUpdate() {
+            const v = document.getElementById('new_version').value;
+            const u = document.getElementById('new_url').value;
+            document.getElementById('push_btn').innerText = "DISPATCHING...";
+            db.ref('config').set({ latest_version: v, download_url: u })
+            .then(() => {
+                alert("BROADCAST SUCCESSFUL\nEvery installed app is now locked until they update to v" + v);
+                document.getElementById('push_btn').innerText = "DISPATCH TO EVERY PHONE";
+            });
+        }
+
+        function addToken() {
+            const t = document.getElementById('token_input').value;
+            if(t) db.ref('tokens/' + t).set(true);
+            document.getElementById('token_input').value = "";
+        }
+    </script>
+</body>
+</html>
